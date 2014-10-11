@@ -159,92 +159,14 @@ function PlayWindow:init()
         },
     }
 
-    self.lblUsersOnline = Label:New {
-        right = 20,
-        width = 100,
-        y = 0,
-        height = 20,
-        caption = "",
-        font = {
-            size = 20,
-        },
-    }
-    local updateUserCount = function() 
-        self.lblUsersOnline:SetCaption("Users: " .. lobby:GetUserCount())
-    end
-    updateUserCount()
-    lobby:AddListener("OnAddUser", updateUserCount)
-    lobby:AddListener("OnRemoveUser", updateUserCount)
-
-    self.lblBattlesOpen = Label:New {
-        right = 20,
-        width = 100,
-        y = 25,
-        height = 20,
-        caption = "",
-        font = {
-            size = 20,
-        },
-    }
-    local updateBattleCount = function() 
-        self.lblBattlesOpen:SetCaption("Battles: " .. lobby:GetBattleCount())
-    end
-    updateBattleCount()
-    lobby:AddListener("OnBattleOpened", updateBattleCount)
-    lobby:AddListener("OnBattleClosed", updateBattleCount)
-
-
-    self.lblPing = Label:New {
-        right = 20,
-        width = 100,
-        y = 50,
-        height = 20,
-        caption = "",
-        font = {
-            size = 20,
-        },
-    }
-
-    -- FIXME: these listeners should be put in a separate file as they are not directly associated with the play window
-    local updateStatus = function()
-        local latency = lobby:GetLatency()
-        local color
-        if latency < 500 then
-            color = "\255\0\255\0"
-        elseif latency < 1000 then
-            color = "\255\255\255\0"
-        else
-            color = "\255\255\125\0"
-        end
-        self.lblPing:SetCaption("Connection: " .. color .. lobby:GetLatency() .. "ms\b")
-    end
-    lobby:AddListener("OnPong", updateStatus)
-    lobby:Ping()
-    
-    lobby:AddListener("OnAccepted", updateStatus)
-
-    lobby:AddListener("OnDisconnected", function() 
-        self.lblPing:SetCaption("Connection: \255\255\0\0Disconnected\b")
-    end)
-	
-	lobby:AddListener("OnJoinBattle", 
-		function(listener, battleID)
-			succ, msg = pcall(function()
-				local battleRoom = BattleRoomWindow(battleID)
-			end)
-			if not succ then
-				Spring.Echo(msg)
-			end
-		end
-	)
-
     self.window = Window:New {
         x = 10,
         width = 500,
-        y = 250,
+        y = 65,
         height = 450,
         parent = screen0,
         resizable = false,
+        draggable = false,
         padding = {0, 20, 0, 0},
         children = {
             self.lblPlaySingleplayer,
@@ -257,7 +179,6 @@ function PlayWindow:init()
 
             self.lblUsersOnline,
             self.lblBattlesOpen,
-            self.lblPing,
         }
     }
 end
