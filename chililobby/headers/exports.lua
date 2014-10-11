@@ -1,6 +1,6 @@
 --chili export
 LUAUI_DIR = "LuaUI/"
-CHILI_LOBBY_IMG_DIR = LUAUI_DIR .. "images/chili_lobby/"
+CHILI_LOBBY_IMG_DIR = CHILILOBBY_DIR .. "images/"
 
 if WG and WG.Chili then
     -- setup Chili
