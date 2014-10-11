@@ -90,7 +90,38 @@ function LoginWindow:init()
             self.btnLogin
         },
         parent = screen0,
+        OnDispose = {
+            function()
+                self:RemoveListeners()
+            end
+        },
     }
+
+    -- FIXME: this should probably be moved to the lobby wrapper
+    self.loginAttempts = 0
+end
+
+function LoginWindow:RemoveListeners()
+    if self.onAccepted then
+        lobby:RemoveListener("OnAccepted", self.onAccepted)
+        self.onAccepted = nil
+    end
+    if self.onDenied then
+        lobby:RemoveListener("OnDenied", self.onDenied)
+        self.onDenied = nil
+    end
+    if self.onAgreementEnd then
+        lobby:RemoveListener("OnAgreementEnd", self.onAgreementEnd)
+        self.onAgreementEnd = nil
+    end
+    if self.onAgreement then
+        lobby:RemoveListener("OnAgreement", self.onAgreement)
+        self.onAgreement = nil
+    end
+    if self.onTASServer then
+        lobby:RemoveListener("OnTASServer", self.onTASServer)
+        self.onTASServer = nil
+    end
 end
 
 function LoginWindow:tryLogin()
@@ -102,50 +133,57 @@ function LoginWindow:tryLogin()
         return
     end
 
-    lobby:Initialize()
+    if not lobby.connected or self.loginAttempts >= 3 then
+        self.loginAttempts = 0
+        self:RemoveListeners()
 
-    lobby:AddListener("OnTASServer", 
-        function(listener)
-            lobby:RemoveListener("OnTASServer", listener)
-
-            local onDenied = function(listener, reason)
-                self.lblError:SetCaption(reason)
-            end
-
-            lobby:AddListener("OnAccepted",
-                function(listener)
-                    local playWindow = PlayWindow()
-                    local chatWindows = ChatWindows()
-                    self.window:Dispose()
-                    lobby:RemoveListener("OnAccepted", listener)
-                    lobby:RemoveListener("OnDenied", onDenied)
-                end
-            )
-
-            lobby:AddListener("OnDenied", onDenied)
-            
-            local onAgreement = function(listener, line)
-                if self.agreementText == nil then
-                    self.agreementText = ""
-                end
-                self.agreementText = self.agreementText .. line .. "\n"
-            end
-            lobby:AddListener("OnAgreement", onAgreement)
-
-            lobby:AddListener("OnAgreementEnd", 
-                function(listener)
-                    self:createAgreementWindow()
-                    lobby:RemoveListener("OnAgreementEnd", listener)
-                    lobby:RemoveListener("OnAgreement", onAgreement)
-                end
-            )
-
-            lobby:Login(username, password, 3)
+        self.onTASServer = function(listener)
+            lobby:RemoveListener("OnTASServer", self.onTASServer)
+            self:OnConnected(listener)
         end
-    )
+        lobby:AddListener("OnTASServer", self.onTASServer)
 
-    lobby:Connect("springrts.com", "8200")
-    --lobby:Connect("localhost", "8200")
+        lobby:Connect("springrts.com", "8200")
+        --lobby:Connect("localhost", "8200")
+    else
+        lobby:Login(username, password, 3)
+    end
+
+    self.loginAttempts = self.loginAttempts + 1
+end
+
+function LoginWindow:OnConnected()
+    self.onDenied = function(listener, reason)
+        self.lblError:SetCaption(reason)
+    end
+
+    self.onAccepted = function(listener)
+        local playWindow = PlayWindow()
+        local chatWindows = ChatWindows()
+        self.window:Dispose()
+        lobby:RemoveListener("OnAccepted", self.onAccepted)
+        lobby:RemoveListener("OnDenied", self.onDenied)
+    end
+
+    lobby:AddListener("OnAccepted", self.onAccepted)
+    lobby:AddListener("OnDenied", self.onDenied)
+
+    self.onAgreement = function(listener, line)
+        if self.agreementText == nil then
+            self.agreementText = ""
+        end
+        self.agreementText = self.agreementText .. line .. "\n"
+    end
+    lobby:AddListener("OnAgreement", self.onAgreement)
+
+    self.onAgreementEnd = function(listener)
+        self:createAgreementWindow()
+        lobby:RemoveListener("OnAgreementEnd", self.onAgreementEnd)
+        lobby:RemoveListener("OnAgreement", self.onAgreement)
+    end
+    lobby:AddListener("OnAgreementEnd", self.onAgreementEnd)
+
+    lobby:Login(username, password, 3)
 end
 
 function LoginWindow:createAgreementWindow()
