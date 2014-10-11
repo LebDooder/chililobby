@@ -174,6 +174,7 @@ function ChatWindows:init()
         parent = screen0,
         caption = "Chat",
         resizable = false,
+        draggable = false,
         padding = {5, 0, 5, 0},
         children = {
             self.tabPanel,
