@@ -132,10 +132,18 @@ function ChatWindows:init()
 			privateChatConsole:AddMessage(lobby:GetMyUserName() .. ": " .. message)
         end
     )
-	lobby:AddListener("OnSaidPrivate",
+    lobby:AddListener("OnSaidPrivate",
         function(listener, userName, message)
-			local privateChatConsole = self:GetPrivateChatConsole(userName)
-			privateChatConsole:AddMessage(userName .. ": " .. message)
+            if userName == 'Nightwatch' then
+                local chanName, userName, msgDate, msg = message:match('.-|(.+)|(.+)|(.+)|(.*)')
+                local channelConsole = self.channelConsoles[chanName]
+                if channelConsole ~= nil then
+                    channelConsole:AddMessage(msg, userName)
+                end
+            else
+                local privateChatConsole = self:GetPrivateChatConsole(userName)
+                privateChatConsole:AddMessage(message, userName)
+            end
         end
     )
 
